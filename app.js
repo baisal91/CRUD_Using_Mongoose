@@ -1,78 +1,86 @@
 //jshint esversion:6
 
+const mongoose = require("mongoose");
 
-//Native mongodb driver
-const MongoClient = require("mongodb").MongoClient;
-const assert = require("assert"); //testing
+mongoose.connect("mongodb://localhost:27017/fruitsDB", { useNewUrlParser: true });
 
-//Conection URL
-const url = "mongodb://localhost:27017";
 
-//Database Name
-const dbName = "fruits";
-
-//Create a new MongoClient
-const client = new MongoClient(url, {
-    useUnifiedTopology: true
+//Create new schema using mongoose for fruit
+const fruitSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: [true, "Please check your data entery, the name is not specified"]  // validation to have name always
+    },
+    rating: {
+        type: Number,  
+        min: 1,  //to give restriction (validation) min to max allowed
+        max: 10
+    },
+    review: String
 });
 
-//Use connect method to connect to the Server
-client.connect(function (err) {
-    assert.strictEqual(null, err);
-    console.log("Connected successfully to server");
+//Create mongoose model
+const Fruit = mongoose.model("Fruit", fruitSchema);
 
-    const db = client.db(dbName);
+//Ready to create documnet insert method same in mongo native driver
+const fruit =  new Fruit({
+    name: "Apple",
+    rating: 7,
+    review: "Pretty solid as a fruit."
+});
+//fruit.save();
 
-   /*  insertDocument(db, function(){ //to insert the documnets
-        client.close();
-    }); */
 
-    findDocumnets(db, function(){ //to find the records
-        client.close();
-    })
-
-    
+//Create new schema using mongoose for person
+const personSchema = new mongoose.Schema({
+    name: String,
+    age: Number
 });
 
+//Create mongoose model
+const Person = mongoose.model("Person", personSchema);
 
+//inser person document
+const person = new Person ({
+    name: "Mark",
+    age: 37
+});
 
-const insertDocument = function (db, callback) {
-    //Get the document collection
-    const collection = db.collection("fruits");
-    //Insert some documents
-    collection.insertMany([{
-        name: "Apple",
-        score: 8,
-        review: "Great fruit"
-    }, {
-        name: "Orange",
-        score: 6,
-        review: "Kind sour"
-    }, {
-        name: "Banana",
-        score: 9,
-        review: "Great stuff!"
-    }
+person.save();
 
-    ], function (err, result) {
-
-        assert.strictEqual(err, null);
-        assert.strictEqual(3, result.result.n);
-        assert.strictEqual(3, result.ops.length);
-
-        console.log("Inserted 3 documents into the collection");
-        callback(result);
-    });
-}
-
-const findDocumnets = function(db, callback){
-    //Get the documents collection
-    const collection = db.collection("fruits");
-    //Find some documents
-    collection.find({}).toArray(function(err, fruits) {
-        assert.strictEqual(err, null);
-        console.log("Foundthe following records");
+//Find function
+Fruit.find(function(err, fruits){
+    if(err){
+        console.log(err);
+    }else{
         console.log(fruits);
-        callback(fruits);
-    });
-}
+    }
+});
+
+
+//update 
+Fruit.updateOne({_id: "5f938512005fc5d64f1964b2"}, {name: "Peach"}, function(err){
+    if(err){
+        console.log(err);
+    }else{
+        console.log("Successfyllu updated");
+    }
+});
+
+//delete One
+Fruit.deleteOne({__id: "5f938b2c7ed1d5d6f1eb7a1d"}, function(err){
+    if(err){
+        console.log(err);
+    }else{
+        console.log("Deleted");
+    }
+});
+
+//delete Many
+Person.deleteMany({name: "Mark"}, function(err){
+    if(err){
+        console.log(err);
+    }else{
+        console.log("Deleted all the person");
+    }
+})
